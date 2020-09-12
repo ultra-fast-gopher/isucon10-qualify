@@ -92,11 +92,11 @@ func (e *Estate) Less(than btree.Item) bool {
 		return false
 	}
 
-	if e.ID < e.ID {
+	if e.ID < c.ID {
 		return true
-	} else {
-		return false
 	}
+
+	return false
 }
 
 //EstateSearchResponse estate/searchへのレスポンスの形式
@@ -1024,7 +1024,7 @@ func searchRecommendedEstateWithChair(c echo.Context) error {
 		})
 	}()
 
-	if counter != 20 {
+	if len(estates) != 20 {
 		estates = []Estate{}
 
 		query = `SELECT * FROM estate WHERE (door_width >= ? AND door_height >= ?) OR (door_width >= ? AND door_height >= ?) ORDER BY popularity DESC, id ASC LIMIT ?`
