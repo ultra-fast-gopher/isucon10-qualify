@@ -336,7 +336,6 @@ func botProtection(next echo.HandlerFunc) echo.HandlerFunc {
 
 		for _, n := range ngUserAgent {
 			if strings.Contains(userAgent, n) {
-				log.Printf("block user-agent: %s", userAgent)
 				return c.String(http.StatusServiceUnavailable, "")
 			}
 		}
