@@ -1042,6 +1042,120 @@ func searchRecommendedEstateWithChair(c echo.Context) error {
 	return c.JSON(http.StatusOK, EstateListResponse{Estates: estates})
 }
 
+func G(a, b, c *Coordinate) *Coordinate {
+	latitude := (a.Latitude +
+		b.Latitude +
+		c.Latitude) / 3.
+
+	longitude := (a.Longitude +
+		b.Longitude +
+		c.Longitude) / 3.
+
+	return &Coordinate{
+		Latitude:  latitude,
+		Longitude: longitude,
+	}
+}
+
+func cross(a, b *Coordinate) float64 {
+	return a.Longitude*b.Latitude - a.Longitude*b.Latitude
+}
+
+func minus(a, b *Coordinate) *Coordinate {
+	return &Coordinate{
+		Latitude:  a.Latitude - b.Latitude,
+		Longitude: a.Longitude - b.Longitude,
+	}
+}
+
+func convexContains(poly *Coordinates, p *Coordinate) bool {
+	P := poly.Coordinates
+	n := len(poly.Coordinates)
+
+	g := G(&P[0],
+		&P[n/3],
+		&P[2*n/3])
+
+	a := 0
+	b := n
+
+	pg := minus(p, g)
+	for a+1 < b {
+		c := (a + b) / 2
+
+		if cross(
+			minus(&P[a], g),
+			minus(&P[c], g),
+		) > 0 {
+			if cross(
+				minus(&P[a], g),
+				pg,
+			) > 0 &&
+				cross(
+					minus(&P[c], g),
+					pg,
+				) < 0 {
+				b = c
+			} else {
+				a = c
+			}
+		} else {
+			if cross(
+				minus(&P[a], g),
+				pg,
+			) < 0 &&
+				cross(
+					minus(&P[c], g),
+					pg,
+				) > 0 {
+				a = c
+			} else {
+				b = c
+			}
+		}
+	}
+
+	b %= n
+	if cross(
+		minus(&P[a], p),
+		minus(&P[b], p),
+	) < 0 {
+		return true
+	}
+
+	if cross(
+		minus(&P[a], p),
+		minus(&P[b], p),
+	) > 0 {
+		return false
+	}
+
+	return true
+}
+
+/*
+enum { OUT, ON, IN };
+int convex_contains(const polygon &P, const point &p) {
+  const int n = P.size();
+  point g = (P[0] + P[n/3] + P[2*n/3]) / 3.0; // inner-point
+  int a = 0, b = n;
+  while (a+1 < b) { // invariant: c is in fan g-P[a]-P[b]
+    int c = (a + b) / 2;
+    if (cross(P[a]-g, P[c]-g) > 0) { // angle < 180 deg
+      if (cross(P[a]-g, p-g) > 0 && cross(P[c]-g, p-g) < 0) b = c;
+      else                                                  a = c;
+    } else {
+      if (cross(P[a]-g, p-g) < 0 && cross(P[c]-g, p-g) > 0) a = c;
+      else                                                  b = c;
+    }
+  }
+  b %= n;
+  if (cross(P[a] - p, P[b] - p) < 0) return 0;
+  if (cross(P[a] - p, P[b] - p) > 0) return 2;
+  return 1;
+}
+*/
+
 func searchEstateNazotte(c echo.Context) error {
 	coordinates := Coordinates{}
 	err := c.Bind(&coordinates)
@@ -1068,21 +1182,13 @@ func searchEstateNazotte(c echo.Context) error {
 
 	estatesInPolygon := []Estate{}
 	for _, estate := range estatesInBoundingBox {
-		validatedEstate := Estate{}
+		res := convexContains(&coordinates, &Coordinate{
+			Latitude:  estate.Latitude,
+			Longitude: estate.Longitude,
+		})
 
-		point := fmt.Sprintf("'POINT(%f %f)'", estate.Latitude, estate.Longitude)
-		query := fmt.Sprintf(`SELECT * FROM estate WHERE id = ? AND ST_Contains(ST_PolygonFromText(%s), ST_GeomFromText(%s))`, coordinates.coordinatesToText(), point)
-		// FIXME: ↓これがN+1っぽい
-		err = dbEstate.Get(&validatedEstate, query, estate.ID)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				continue
-			} else {
-				c.Echo().Logger.Errorf("db access is failed on executing validate if estate is in polygon : %v", err)
-				return c.NoContent(http.StatusInternalServerError)
-			}
-		} else {
-			estatesInPolygon = append(estatesInPolygon, validatedEstate)
+		if res {
+			estatesInPolygon = append(estatesInPolygon, estate)
 		}
 	}
 
