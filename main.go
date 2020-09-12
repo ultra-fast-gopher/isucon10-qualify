@@ -424,7 +424,7 @@ func initialize(c echo.Context) error {
 	}
 
 	lock.Lock()
-	tr.Clear(true)
+	tr.Clear(false)
 	for i := range estates {
 		tr.ReplaceOrInsert(&estates[i])
 	}
