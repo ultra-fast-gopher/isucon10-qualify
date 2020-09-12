@@ -331,6 +331,19 @@ func main() {
 	dbEstate.SetMaxOpenConns(10)
 	defer dbEstate.Close()
 
+	estates := []Estate{}
+	if err := dbEstate.Select(&estates, "SELECT * FROM estate"); err != nil {
+		c.Logger().Errorf("failed to get estates: %+v", err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	lock.Lock()
+	tr.Clear(false)
+	for i := range estates {
+		tr.ReplaceOrInsert(&estates[i])
+	}
+	lock.Unlock()
+
 	// Start server
 	serverPort := fmt.Sprintf(":%v", getEnv("SERVER_PORT", "1323"))
 	e.Logger.Fatal(e.Start(serverPort))
