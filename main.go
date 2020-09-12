@@ -1000,9 +1000,11 @@ func searchRecommendedEstateWithChair(c echo.Context) error {
 	func() {
 		lock.RLock()
 		defer lock.RUnlock()
+		idx := 0
 
 		tr.Ascend(func(i btree.Item) bool {
 			e := i.(*Estate)
+			idx++
 
 			if (e.DoorWidth > whd1 && e.DoorHeight > whd2) ||
 				(e.DoorWidth > whd2 && e.DoorHeight > whd1) {
@@ -1014,9 +1016,27 @@ func searchRecommendedEstateWithChair(c echo.Context) error {
 				}
 			}
 
+			if idx > 10000 {
+				return false
+			}
+
 			return true
 		})
 	}()
+
+	if counter != 20 {
+		estates = []Estate{}
+
+		query = `SELECT * FROM estate WHERE (door_width >= ? AND door_height >= ?) OR (door_width >= ? AND door_height >= ?) ORDER BY popularity DESC, id ASC LIMIT ?`
+		err = dbEstate.Select(&estates, query, whd1, whd2, whd2, whd1, Limit)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return c.JSON(http.StatusOK, EstateListResponse{[]Estate{}})
+			}
+			c.Logger().Errorf("Database execution error : %v", err)
+			return c.NoContent(http.StatusInternalServerError)
+		}
+	}
 
 	return c.JSON(http.StatusOK, EstateListResponse{Estates: estates})
 }
