@@ -1193,7 +1193,7 @@ func searchEstateNazotte(c echo.Context) error {
 			Longitude: estate.Longitude,
 		})
 
-		/*validatedEstate := Estate{}
+		validatedEstate := Estate{}
 		point := fmt.Sprintf("'POINT(%f %f)'", estate.Latitude, estate.Longitude)
 		query := fmt.Sprintf(`SELECT * FROM estate WHERE id = ? AND ST_Contains(ST_PolygonFromText(%s), ST_GeomFromText(%s))`, coordinates.coordinatesToText(), point)
 		// FIXME: ↓これがN+1っぽい
@@ -1202,7 +1202,7 @@ func searchEstateNazotte(c echo.Context) error {
 
 		if foundInDB != res {
 			c.Logger().Errorf("invalid contains correct: %v: %s, %s", foundInDB, coordinates.coordinatesToText(), point)
-		}*/
+		}
 
 		if res {
 			estatesInPolygon = append(estatesInPolygon, estate)
