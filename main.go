@@ -265,7 +265,7 @@ func main() {
 	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	// e.Use(botProtection)
+	e.Use(botProtection)
 
 	// Initialize
 	e.POST("/initialize", initialize)
@@ -335,7 +335,7 @@ func botProtection(next echo.HandlerFunc) echo.HandlerFunc {
 		userAgent := c.Request().Header.Get("user-agent")
 
 		for _, n := range ngUserAgent {
-			if userAgent == n {
+			if strings.Contains(userAgent,n) {
 				return c.String(http.StatusServiceUnavailable, "")
 			}
 		}
