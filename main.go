@@ -252,6 +252,7 @@ func main() {
 	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(botProtection)
 
 	// Initialize
 	e.POST("/initialize", initialize)
@@ -287,6 +288,45 @@ func main() {
 	// Start server
 	serverPort := fmt.Sprintf(":%v", getEnv("SERVER_PORT", "1323"))
 	e.Logger.Fatal(e.Start(serverPort))
+}
+
+func botProtection(next echo.HandlerFunc) echo.HandlerFunc {
+	ngUserAgent := []string{
+		"Mediapartners-ISUCON",
+		"ISUCONCoffee",
+		"isubot",
+		"Isupider",
+		"ISUCONbot-Image/",
+		"ISUCONbot",
+		"ISUCONbot-Mobile",
+		"ISUCONFeedSeeker",
+		"ISUCONFeedSeekerBeta",
+		"Isupider+",
+		"Isupider-image+",
+		`crawler (https://isucon.invalid/support/faq/)`,
+		`crawler (https://isucon.invalid/help/jp/)`,
+	}
+	/*ngUserAgentRegexp := []*regexp.Regexp{
+		regexp.MustCompile("(?i)(bot|crawler|spider)(?:[-_ .\\/;@()]|$)"),
+	}*/
+
+	return func(c echo.Context) error {
+		userAgent := c.Request().Header.Get("user-agent")
+
+		for _, n := range ngUserAgent {
+			if userAgent == n {
+				return c.String(http.StatusServiceUnavailable, "")
+			}
+		}
+
+		/*for _, r := range ngUserAgentRegexp {
+			if r.MatchString(userAgent) {
+				return c.String(http.StatusServiceUnavailable, "")
+			}
+		}*/
+
+		return next(c)
+	}
 }
 
 func initialize(c echo.Context) error {
