@@ -1100,7 +1100,7 @@ func convexContains(poly *Coordinates, p1 *Coordinate) bool {
 		deg += getDegree(math.Acos(cos))
 	}
 
-	if Math.round(deg) == 360 {
+	if math.Round(deg) == 360 {
 		return true
 	} else {
 		return false
