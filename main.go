@@ -1070,6 +1070,12 @@ func minus(a, b *Coordinate) *Coordinate {
 
 func convexContains(poly *Coordinates, p *Coordinate) bool {
 	P := poly.Coordinates
+
+	if P[0].Latitude == P[len(P)-1].Latitude &&
+		P[0].Longitude == P[len(P)-1].Longitude {
+		P = P[:len(P)-1]
+	}
+
 	n := len(poly.Coordinates)
 
 	g := G(&P[0],
@@ -1187,7 +1193,7 @@ func searchEstateNazotte(c echo.Context) error {
 			Longitude: estate.Longitude,
 		})
 
-		validatedEstate := Estate{}
+		/*validatedEstate := Estate{}
 		point := fmt.Sprintf("'POINT(%f %f)'", estate.Latitude, estate.Longitude)
 		query := fmt.Sprintf(`SELECT * FROM estate WHERE id = ? AND ST_Contains(ST_PolygonFromText(%s), ST_GeomFromText(%s))`, coordinates.coordinatesToText(), point)
 		// FIXME: ↓これがN+1っぽい
@@ -1195,8 +1201,8 @@ func searchEstateNazotte(c echo.Context) error {
 		foundInDB := err == nil
 
 		if foundInDB != res {
-			c.Logger().Errorf("invalid contains: %s, %s", coordinates.coordinatesToText(), point)
-		}
+			c.Logger().Errorf("invalid contains correct: %v: %s, %s", foundInDB, coordinates.coordinatesToText(), point)
+		}*/
 
 		if res {
 			estatesInPolygon = append(estatesInPolygon, estate)
