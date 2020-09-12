@@ -1171,10 +1171,6 @@ func searchEstateNazotte(c echo.Context) error {
 		if res {
 			estatesInPolygon = append(estatesInPolygon, estate)
 		}
-
-		if len(estatesInPolygon) == NazotteLimit {
-			break
-		}
 	}
 
 	var re EstateSearchResponse
