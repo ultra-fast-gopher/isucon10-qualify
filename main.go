@@ -201,7 +201,7 @@ func (r *RecordMapper) Err() error {
 
 func NewMySQLConnectionEnv() *MySQLConnectionEnv {
 	return &MySQLConnectionEnv{
-		Host:     "10.164.27.102",
+		Host:     "10.164.27.103",
 		Port:     getEnv("MYSQL_PORT", "3306"),
 		User:     getEnv("MYSQL_USER", "isucon"),
 		DBName:   getEnv("MYSQL_DBNAME", "isuumo"),
