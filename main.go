@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -252,6 +253,7 @@ func main() {
 	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(botProtection)
 
 	// Initialize
 	e.POST("/initialize", initialize)
@@ -287,6 +289,41 @@ func main() {
 	// Start server
 	serverPort := fmt.Sprintf(":%v", getEnv("SERVER_PORT", "1323"))
 	e.Logger.Fatal(e.Start(serverPort))
+}
+
+func botProtection(next echo.HandlerFunc) echo.HandlerFunc {
+	ngUserAgent := []string{
+		"Mediapartners-ISUCON",
+		"ISUCONCoffee",
+		"isubot",
+		"Isupider",
+	}
+	ngUserAgentRegexp := []*regexp.Regexp{
+		regexp.MustCompile("(?i)(bot|crawler|spider)(?:[-_ .\\/;@()]|$)"),
+		regexp.MustCompile("ISUCONbot(-Mobile)?"),
+		regexp.MustCompile("ISUCONbot-Image\\/"),
+		regexp.MustCompile("ISUCONFeedSeeker(Beta)?"),
+		regexp.MustCompile("crawler \\(https:\\/\\/isucon\\.invalid\\/(support\\/faq\\/|help\\/jp\\/)"),
+		regexp.MustCompile("Isupider(-image)?\\+"),
+	}
+
+	return func(c echo.Context) error {
+		userAgent := c.Request().Header.Get("user-agent")
+
+		for _, n := range ngUserAgent {
+			if strings.Contains(userAgent, n) {
+				return c.String(http.StatusServiceUnavailable, "")
+			}
+		}
+
+		for _, r := range ngUserAgentRegexp {
+			if r.MatchString(userAgent) {
+				return c.String(http.StatusServiceUnavailable, "")
+			}
+		}
+
+		return next(c)
+	}
 }
 
 func initialize(c echo.Context) error {
