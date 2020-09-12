@@ -303,8 +303,8 @@ func botProtection(next echo.HandlerFunc) echo.HandlerFunc {
 		"ISUCONFeedSeekerBeta",
 		"Isupider+",
 		"Isupider-image+",
-		`crawler (https://isucon.invalid/support/faq/`,
-		`crawler (https://isucon.invalid/help/jp/`,
+		`crawler (https://isucon.invalid/support/faq/)`,
+		`crawler (https://isucon.invalid/help/jp/)`,
 	}
 	/*ngUserAgentRegexp := []*regexp.Regexp{
 		regexp.MustCompile("(?i)(bot|crawler|spider)(?:[-_ .\\/;@()]|$)"),
