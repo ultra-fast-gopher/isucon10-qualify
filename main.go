@@ -93,11 +93,11 @@ func (e *Estate) Less(than btree.Item) bool {
 		return false
 	}
 
-	if e.ID < e.ID {
+	if e.ID < c.ID {
 		return true
-	} else {
-		return false
 	}
+
+	return false
 }
 
 //EstateSearchResponse estate/searchへのレスポンスの形式
@@ -425,7 +425,7 @@ func initialize(c echo.Context) error {
 	}
 
 	lock.Lock()
-	tr.Clear(true)
+	tr.Clear(false)
 	for i := range estates {
 		tr.ReplaceOrInsert(&estates[i])
 	}
@@ -1007,8 +1007,8 @@ func searchRecommendedEstateWithChair(c echo.Context) error {
 			e := i.(*Estate)
 			idx++
 
-			if (e.DoorWidth > whd1 && e.DoorHeight > whd2) ||
-				(e.DoorWidth > whd2 && e.DoorHeight > whd1) {
+			if (e.DoorWidth >= whd1 && e.DoorHeight >= whd2) ||
+				(e.DoorWidth >= whd2 && e.DoorHeight >= whd1) {
 				estates = append(estates, *e)
 				counter++
 
@@ -1025,7 +1025,7 @@ func searchRecommendedEstateWithChair(c echo.Context) error {
 		})
 	}()
 
-	if counter != 20 {
+	if len(estates) != 20 {
 		estates = []Estate{}
 
 		query = `SELECT * FROM estate WHERE (door_width >= ? AND door_height >= ?) OR (door_width >= ? AND door_height >= ?) ORDER BY popularity DESC, id ASC LIMIT ?`
