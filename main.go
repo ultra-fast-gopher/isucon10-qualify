@@ -418,7 +418,7 @@ func initialize(c echo.Context) error {
 	}
 
 	estates := []Estate{}
-	if err := dbEstate.Select(&estates, "SELECT * FROM estates"); err != nil {
+	if err := dbEstate.Select(&estates, "SELECT * FROM estate"); err != nil {
 		c.Logger().Errorf("failed to get estates: %+v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
