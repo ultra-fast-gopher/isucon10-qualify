@@ -1,0 +1,16 @@
+name: Docker
+on: 
+  push:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: [self-hosted, linux, x64, node1]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build
+        run: |
+          export HASH="${GITHUB_SHA:0:7}"
+          make
+          mv isuumo /home/isucon/isuumo/webapp/go/isuumo
+          sudo systemctl restart isuumo.go.service
