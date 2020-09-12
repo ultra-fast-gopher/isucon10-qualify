@@ -839,11 +839,23 @@ func searchRecommendedEstateWithChair(c echo.Context) error {
 	}
 
 	var estates []Estate
-	w := chair.Width
-	h := chair.Height
-	d := chair.Depth
-	query = `SELECT * FROM estate WHERE (door_width >= ? AND door_height >= ?) OR (door_width >= ? AND door_height >= ?) OR (door_width >= ? AND door_height >= ?) OR (door_width >= ? AND door_height >= ?) OR (door_width >= ? AND door_height >= ?) OR (door_width >= ? AND door_height >= ?) ORDER BY popularity DESC, id ASC LIMIT ?`
-	err = db.Select(&estates, query, w, h, w, d, h, w, h, d, d, w, d, h, Limit)
+	whd1 := chair.Width
+	whd2 := chair.Height
+	whd3 := chair.Depth
+	// if(d3 < d2) swap(d3, d2)
+	if whd3 < whd2 {
+		whd3, whd2 = whd2, whd3
+	}
+	// if(d2 < d1) swap(d2, d1)
+	if whd2 < whd1 {
+		whd2, whd1 = whd1, whd2
+	}
+	// if(d3 < d2) swap(d3, d2)
+	if whd3 < whd2 {
+		whd3, whd2 = whd2, whd3
+	}
+	query = `SELECT * FROM estate WHERE (door_width >= ? AND door_height >= ?) OR (door_width >= ? AND door_height >= ?) ORDER BY popularity DESC, id ASC LIMIT ?`
+	err = db.Select(&estates, query, whd1, whd2, whd2, whd1, Limit)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return c.JSON(http.StatusOK, EstateListResponse{[]Estate{}})
