@@ -14,3 +14,4 @@ jobs:
           make
           mv isuumo /home/isucon/isuumo/webapp/go/isuumo
           sudo systemctl restart isuumo.go.service
+          cp mysql/* /home/isucon/isuumo/webapp/mysql/db/
