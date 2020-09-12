@@ -8,7 +8,8 @@ import (
 	"io/ioutil"
 	"math"
 	"net/http"
-	_ "net/http/pprof"
+
+	// _ "net/http/pprof"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -277,9 +278,9 @@ func init() {
 }
 
 func main() {
-	go func() {
+	/*go func() {
 		fmt.Println(http.ListenAndServe("0.0.0.0:6060", nil))
-	}()
+	}()*/
 
 	// Echo instance
 	e := echo.New()
