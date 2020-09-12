@@ -1130,7 +1130,7 @@ func convexContains(poly *Coordinates, p *Coordinate) bool {
 		return true
 	}
 
-	return true
+	return false
 }
 
 /*
