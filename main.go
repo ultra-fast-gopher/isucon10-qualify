@@ -16,6 +16,7 @@ import (
 	"sync"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/google/btree"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -24,6 +25,9 @@ import (
 
 const Limit = 20
 const NazotteLimit = 50
+
+var tr = btree.New(2)
+var lock sync.RWMutex
 
 var dbChair *sqlx.DB
 var dbEstate *sqlx.DB
@@ -75,6 +79,24 @@ type Estate struct {
 	DoorWidth   int64   `db:"door_width" json:"doorWidth"`
 	Features    string  `db:"features" json:"features"`
 	Popularity  int64   `db:"popularity" json:"-"`
+}
+
+func (e *Estate) Less(than btree.Item) bool {
+	c := than.(*Estate)
+
+	if e.Popularity > c.Popularity {
+		return true
+	}
+
+	if e.Popularity < c.Popularity {
+		return false
+	}
+
+	if e.ID < e.ID {
+		return true
+	} else {
+		return false
+	}
 }
 
 //EstateSearchResponse estate/searchへのレスポンスの形式
@@ -393,6 +415,16 @@ func initialize(c echo.Context) error {
 	wg.Wait()
 	if err1 != nil || err2 != nil {
 		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	estates := []Estate{}
+	if err := dbEstate.Select(&estates, "SELECT * FROM estates"); err != nil {
+		c.Logger().Errorf("failed to get estates: %+v", err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	for i := range estates {
+		tr.ReplaceOrInsert(&estates[i])
 	}
 
 	return c.JSON(http.StatusOK, InitializeResponse{
@@ -747,6 +779,8 @@ func postEstate(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 	defer tx.Rollback()
+
+	all := make([]*Estate, 0, len(records))
 	for _, row := range records {
 		rm := RecordMapper{Record: row}
 		id := rm.NextInt()
@@ -770,7 +804,29 @@ func postEstate(c echo.Context) error {
 			c.Logger().Errorf("failed to insert estate: %v", err)
 			return c.NoContent(http.StatusInternalServerError)
 		}
+		e := &Estate{
+			ID:          int64(id),
+			Name:        name,
+			Description: description,
+			Thumbnail:   thumbnail,
+			Address:     address,
+			Latitude:    latitude,
+			Longitude:   longitude,
+			Rent:        int64(rent),
+			DoorHeight:  int64(doorHeight),
+			DoorWidth:   int64(doorWidth),
+			Features:    features,
+			Popularity:  int64(popularity),
+		}
+
+		all = append(all, e)
 	}
+	lock.Lock()
+	for i := range all {
+		tr.ReplaceOrInsert(all[i])
+	}
+	lock.Unlock()
+
 	if err := tx.Commit(); err != nil {
 		c.Logger().Errorf("failed to commit tx: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
@@ -936,15 +992,28 @@ func searchRecommendedEstateWithChair(c echo.Context) error {
 	if whd3 < whd2 {
 		whd3, whd2 = whd2, whd3
 	}
-	query = `SELECT * FROM estate WHERE (door_width >= ? AND door_height >= ?) OR (door_width >= ? AND door_height >= ?) ORDER BY popularity DESC, id ASC LIMIT ?`
-	err = dbEstate.Select(&estates, query, whd1, whd2, whd2, whd1, Limit)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return c.JSON(http.StatusOK, EstateListResponse{[]Estate{}})
-		}
-		c.Logger().Errorf("Database execution error : %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
+
+	counter := 0
+	func() {
+		lock.RLock()
+		defer lock.RUnlock()
+
+		tr.Ascend(func(i btree.Item) bool {
+			e := i.(*Estate)
+
+			if (e.DoorWidth > whd1 && e.DoorHeight > whd2) ||
+				(e.DoorWidth > whd2 && e.DoorHeight > whd1) {
+				estates = append(estates, *e)
+				counter++
+
+				if counter >= 20 {
+					return false
+				}
+			}
+
+			return true
+		})
+	}()
 
 	return c.JSON(http.StatusOK, EstateListResponse{Estates: estates})
 }
