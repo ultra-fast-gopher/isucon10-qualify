@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -1068,75 +1069,42 @@ func minus(a, b *Coordinate) *Coordinate {
 	}
 }
 
-func convexContains(poly *Coordinates, p *Coordinate) bool {
-	P := poly.Coordinates
+func getDegree(radian float64) float64 {
+	return radian / math.Pi * 180
+}
 
-	if P[0].Latitude == P[len(P)-1].Latitude &&
-		P[0].Longitude == P[len(P)-1].Longitude {
-		P = P[:len(P)-1]
-	}
+func convexContains(poly *Coordinates, p1 *Coordinate) bool {
+	comparisonArr := poly.Coordinates
+	var deg = 0.
+	var p1x = p1.Longitude
+	var p1y = p1.Latitude
 
-	n := len(poly.Coordinates)
-
-	g := G(&P[0],
-		&P[n/3],
-		&P[2*n/3])
-
-	a := 0
-	b := n
-
-	pg := minus(p, g)
-	for a+1 < b {
-		c := (a + b) / 2
-
-		if cross(
-			minus(&P[a], g),
-			minus(&P[c], g),
-		) > 0 {
-			if cross(
-				minus(&P[a], g),
-				pg,
-			) > 0 &&
-				cross(
-					minus(&P[c], g),
-					pg,
-				) < 0 {
-				b = c
-			} else {
-				a = c
-			}
+	for index := range comparisonArr {
+		p2x := comparisonArr[index].Longitude
+		p2y := comparisonArr[index].Latitude
+		var p3x, p3y float64
+		if index < len(comparisonArr)-1 {
+			p3x = comparisonArr[index+1].Longitude
+			p3y = comparisonArr[index+1].Latitude
 		} else {
-			if cross(
-				minus(&P[a], g),
-				pg,
-			) < 0 &&
-				cross(
-					minus(&P[c], g),
-					pg,
-				) > 0 {
-				a = c
-			} else {
-				b = c
-			}
+			p3x = comparisonArr[0].Longitude
+			p3y = comparisonArr[0].Latitude
 		}
+
+		var ax = p2x - p1x
+		var ay = p2y - p1y
+		var bx = p3x - p1x
+		var by = p3y - p1y
+
+		var cos = (ax*bx + ay*by) / (math.Sqrt(ax*ax+ay*ay) * math.Sqrt(bx*bx+by*by))
+		deg += getDegree(math.Acos(cos))
 	}
 
-	b %= n
-	if cross(
-		minus(&P[a], p),
-		minus(&P[b], p),
-	) < 0 {
+	if Math.round(deg) == 360 {
+		return true
+	} else {
 		return false
 	}
-
-	if cross(
-		minus(&P[a], p),
-		minus(&P[b], p),
-	) > 0 {
-		return true
-	}
-
-	return false
 }
 
 /*
