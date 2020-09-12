@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -349,9 +350,9 @@ func botProtection(next echo.HandlerFunc) echo.HandlerFunc {
 		`crawler (https://isucon.invalid/support/faq/)`,
 		`crawler (https://isucon.invalid/help/jp/)`,
 	}
-	/*ngUserAgentRegexp := []*regexp.Regexp{
-		regexp.MustCompile("(?i)(bot|crawler|spider)(?:[-_ .\\/;@()]|$)"),
-	}*/
+	ngUserAgentRegexp := []*regexp.Regexp{
+		regexp.MustCompile(`(?i)(bot|crawler|spider)(?:[-_ ./;@()]|$)`),
+	}
 
 	return func(c echo.Context) error {
 		userAgent := c.Request().Header.Get("user-agent")
@@ -362,11 +363,11 @@ func botProtection(next echo.HandlerFunc) echo.HandlerFunc {
 			}
 		}
 
-		/*for _, r := range ngUserAgentRegexp {
+		for _, r := range ngUserAgentRegexp {
 			if r.MatchString(userAgent) {
 				return c.String(http.StatusServiceUnavailable, "")
 			}
-		}*/
+		}
 
 		return next(c)
 	}
