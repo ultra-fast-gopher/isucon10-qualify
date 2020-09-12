@@ -1120,14 +1120,14 @@ func convexContains(poly *Coordinates, p *Coordinate) bool {
 		minus(&P[a], p),
 		minus(&P[b], p),
 	) < 0 {
-		return true
+		return false
 	}
 
 	if cross(
 		minus(&P[a], p),
 		minus(&P[b], p),
 	) > 0 {
-		return false
+		return true
 	}
 
 	return true
