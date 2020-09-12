@@ -423,9 +423,12 @@ func initialize(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
+	lock.Lock()
+	tr.Clear(true)
 	for i := range estates {
 		tr.ReplaceOrInsert(&estates[i])
 	}
+	lock.Unlock()
 
 	return c.JSON(http.StatusOK, InitializeResponse{
 		Language: "go",
