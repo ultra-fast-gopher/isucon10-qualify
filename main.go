@@ -1058,7 +1058,7 @@ func G(a, b, c *Coordinate) *Coordinate {
 }
 
 func cross(a, b *Coordinate) float64 {
-	return a.Longitude*b.Latitude - a.Longitude*b.Latitude
+	return a.Longitude*b.Latitude - b.Longitude*a.Latitude
 }
 
 func minus(a, b *Coordinate) *Coordinate {
