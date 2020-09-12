@@ -1075,6 +1075,12 @@ func getDegree(radian float64) float64 {
 
 func convexContains(poly *Coordinates, p1 *Coordinate) bool {
 	comparisonArr := poly.Coordinates
+
+	if comparisonArr[0].Latitude == comparisonArr[len(comparisonArr)-1].Latitude &&
+		comparisonArr[0].Longitude == comparisonArr[len(comparisonArr)-1].Longitude {
+		comparisonArr = comparisonArr[:len(comparisonArr)-1]
+	}
+
 	var deg = 0.
 	var p1x = p1.Longitude
 	var p1y = p1.Latitude
@@ -1169,7 +1175,7 @@ func searchEstateNazotte(c echo.Context) error {
 		foundInDB := err == nil
 
 		if foundInDB != res {
-			c.Logger().Errorf("invalid contains correct: %v: %s, %s", foundInDB, coordinates.coordinatesToText(), point)
+			c.Logger().Errorf("invalid contains correctv2: %v: %s, %s", foundInDB, coordinates.coordinatesToText(), point)
 		}
 
 		if res {
