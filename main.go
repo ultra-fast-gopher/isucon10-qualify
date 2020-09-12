@@ -1006,8 +1006,8 @@ func searchRecommendedEstateWithChair(c echo.Context) error {
 			e := i.(*Estate)
 			idx++
 
-			if (e.DoorWidth > whd1 && e.DoorHeight > whd2) ||
-				(e.DoorWidth > whd2 && e.DoorHeight > whd1) {
+			if (e.DoorWidth >= whd1 && e.DoorHeight >= whd2) ||
+				(e.DoorWidth >= whd2 && e.DoorHeight >= whd1) {
 				estates = append(estates, *e)
 				counter++
 
