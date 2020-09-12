@@ -19,7 +19,8 @@ CREATE TABLE isuumo.estate
     features    VARCHAR(64)         NOT NULL,
     popularity  INTEGER             NOT NULL,
     KEY `door_height` (`door_height`,`door_width`) USING BTREE,
-    KEY `rent` (`rent`)
+    KEY `rent` (`rent`),
+    KEY `popularity` (`popularity`)
 );
 
 CREATE TABLE isuumo.chair
@@ -37,5 +38,6 @@ CREATE TABLE isuumo.chair
     kind        VARCHAR(64)     NOT NULL,
     popularity  INTEGER         NOT NULL,
     stock       INTEGER         NOT NULL,
-    KEY `stock` (`stock`)
+    KEY `stock` (`stock`),
+    KEY `price` (`price`)
 );
